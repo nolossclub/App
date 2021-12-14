@@ -4,7 +4,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout 🛎️
+      - name: Checkout Repo
         uses: actions/checkout@v2.3.1
 
       - name: Init
@@ -12,13 +12,13 @@ jobs:
           sudo apt-get update -y 
           sudo apt install git -y
           
-      - name: Install and Build
+      - name: Install and Build Project
         run: |
           npm i
           npm run build
           
-      - name: Deploy 🚀
+      - name: Deploy App
         uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
           branch: gh-pages
-          folder: dist
+          folder: build
