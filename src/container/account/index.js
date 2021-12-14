@@ -116,7 +116,7 @@ function Account() {
                       variant="link"
                       color="info"
                       target="_blank"
-                      href={`${row.tokenUri}.json`}
+                      href={`${row.tokenUri}.png`}
                     >
                       Info
                     </Button>
