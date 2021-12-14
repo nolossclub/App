@@ -57,7 +57,7 @@ function Account() {
 
   const burnToken = async (tokenId) => {
     const entered = await controllerContract.burn(tokenId, {
-      gasLimit: 200000,
+      gasLimit: 500000,
     });
 
     library.once(entered.hash, (done) => {

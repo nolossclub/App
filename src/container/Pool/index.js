@@ -137,7 +137,7 @@ function Pool() {
 
   const enterLotto = async () => {
     const entered = await controllerContract.mint({
-      gasLimit: 200000,
+      gasLimit: 800000,
     });
 
     library.once(entered.hash, (done) => {
