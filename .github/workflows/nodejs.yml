@@ -7,15 +7,17 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v2.3.1
 
-      - name: Init
+      - name: Install Yarn
         run: |
           sudo apt-get update -y 
           sudo apt install git -y
+          npm install -g yarn
+          rm -rf yarn.lock
           
       - name: Install and Build Project
         run: |
-          npm i
-          npm run build
+          yarn
+          yarn build
           
       - name: Deploy App
         uses: JamesIves/github-pages-deploy-action@4.1.4
