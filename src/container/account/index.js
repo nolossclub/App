@@ -9,7 +9,7 @@ import Grid from "@mui/material/Grid";
 import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-
+import config from "../../utils/config";
 import styled from "@emotion/styled";
 
 import { ContainerBox } from "../../utils/style";
@@ -57,7 +57,7 @@ function Account() {
 
   const burnToken = async (tokenId) => {
     const entered = await controllerContract.burn(tokenId, {
-      gasLimit: 500000,
+      gasLimit: config.MAX_GAS_LIMIT,
     });
 
     library.once(entered.hash, (done) => {

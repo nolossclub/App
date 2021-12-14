@@ -7,7 +7,7 @@ import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import { ethers } from "ethers";
-
+import config from "../../utils/config";
 import {
   useControllerContract,
   useBUSDContract,
@@ -16,7 +16,6 @@ import {
 import { useWeb3React } from "@web3-react/core";
 import { formatEther } from "@ethersproject/units";
 import styled from "@emotion/styled";
-import config from "../../utils/config";
 import { CustomModalBox, ContainerBox } from "../../utils/style";
 
 const MAX_ALLOWANCE = ethers.BigNumber.from(
@@ -137,7 +136,7 @@ function Pool() {
 
   const enterLotto = async () => {
     const entered = await controllerContract.mint({
-      gasLimit: 800000,
+      gasLimit: config.MAX_GAS_LIMIT,
     });
 
     library.once(entered.hash, (done) => {
