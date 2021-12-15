@@ -7,6 +7,10 @@ import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import { ethers } from "ethers";
+import {
+  useRecoilState,
+} from 'recoil';
+
 import config from "../../utils/config";
 import {
   useControllerContract,
@@ -17,6 +21,7 @@ import { useWeb3React } from "@web3-react/core";
 import { formatEther } from "@ethersproject/units";
 import styled from "@emotion/styled";
 import { CustomModalBox, ContainerBox } from "../../utils/style";
+import { tvlState, lottoState, totalNftsState, busdBalanceState } from "../../utils/states";
 
 const MAX_ALLOWANCE = ethers.BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
@@ -31,10 +36,10 @@ function Pool() {
   const busdContract = useBUSDContract(0);
   const nftContract = useNFTContract(0);
 
-  const [tvl, setTvl] = useState(0);
-  const [lotto, setLotto] = useState(0);
-  const [busdBalance, setBusdBalance] = useState(0);
-  const [totalNfts, setTotalNfts] = useState(0);
+  const [tvl, setTvl] = useRecoilState(tvlState);
+  const [lotto, setLotto] = useRecoilState(lottoState);
+  const [busdBalance, setBusdBalance] = useRecoilState(busdBalanceState);
+  const [totalNfts, setTotalNfts] = useRecoilState(totalNftsState);
   const [allowance, setAllowance] = useState(true);
 
   const [open, setOpen] = useState(false);

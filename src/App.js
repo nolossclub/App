@@ -6,6 +6,9 @@ import { createTheme } from "@mui/material/styles";
 import { Web3ReactProvider } from "@web3-react/core";
 import { Web3Provider } from "@ethersproject/providers";
 import { BrowserRouter as Router } from "react-router-dom";
+import {
+  RecoilRoot
+} from 'recoil';
 
 function getLibrary(provider) {
   const library = new Web3Provider(provider);
@@ -47,12 +50,14 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
+      <RecoilRoot>
       <Web3ReactProvider getLibrary={getLibrary}>
         <CssBaseline />
         <Router>
           <Home />
         </Router>
       </Web3ReactProvider>
+      </RecoilRoot>
     </ThemeProvider>
   );
 }

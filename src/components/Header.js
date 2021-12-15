@@ -21,10 +21,10 @@ const pages = [
     name: "Pool",
     url: "/",
   },
-  // {
-  //   name: "Winners",
-  //   url: "/winners",
-  // },
+  {
+    name: "Winners",
+    url: "/winners",
+  },
   {
     name: "Account",
     url: "/account",

@@ -6,34 +6,59 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
+import axios from "axios";
+import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import { ContainerBox } from "../../utils/style";
 import { useNFTContract } from "./../../hooks/index";
 import { formatETHAddress } from "./../../utils/index";
-
-function createData(address, ticketNumber, prize) {
-  return { address, ticketNumber, prize };
-}
-
-const rows = [
-  createData("0xaff4a54a3ecfbb7ea8c9ed90b88b1b7819145eeb", 159, 1206),
-  createData("0x756f14dcb224f270a2d4c4e8519acb15b2b8c41b", 237, 902),
-  createData("0xe2b990a6397453b3c3d8ea1b096acc22fa97ee6b", 262, 16000),
-  createData("0x54bee98e4e23ff52be4ca93200a9aab41c721d39", 305, 3000),
-];
+import config from "../../utils/config";
+import { useRecoilState } from "recoil";
+import { winnersState } from "../../utils/states";
+import { formatEther } from "@ethersproject/units";
 
 function Winners() {
   const nftContract = useNFTContract();
 
+  const [winners, setWinners] = useRecoilState(winnersState);
+
   useEffect(() => {
     let stale = false;
     const initData = async () => {
-      if (!stale) {
+      try {
+        let winnersList = await axios({
+          url: config.THEGRAPH_URL,
+          method: "post",
+          data: {
+            query: `
+            {
+              winners(first: 10) {
+                id
+                txn
+                address
+                amount
+              }
+            }
+            `,
+          },
+        }).then((res) => res.data.data.winners);
+
+        winnersList = winnersList.map((winner) => {
+          winner.amount = parseFloat(formatEther(winner.amount)).toFixed(4);
+          return winner;
+        });
+
+        if (!stale) {
+          setWinners(winnersList);
+        }
+      } catch (e) {
+        console.log(e);
       }
     };
     initData();
     return () => {
       stale = true;
     };
+    // eslint-disable-next-line
   }, [nftContract]);
 
   return (
@@ -47,24 +72,38 @@ function Winners() {
                   <b>Address</b>
                 </TableCell>
                 <TableCell align="right">
-                  <b>Ticket #</b>
+                  <b>Reward</b>
                 </TableCell>
                 <TableCell align="right">
-                  <b>Reward</b>
+                  <b>Txn</b>
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((row) => (
+              {winners.map((row) => (
                 <TableRow
                   key={JSON.stringify(row)}
                   sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
                 >
                   <TableCell component="th" scope="row">
-                    {formatETHAddress(row.address)}
+                    <a
+                      href={`https://www.bscscan.com/address/${row.address}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {formatETHAddress(row.address)}
+                    </a>
                   </TableCell>
-                  <TableCell align="right">{row.ticketNumber}</TableCell>
-                  <TableCell align="right">${row.prize}</TableCell>
+                  <TableCell align="right">${row.amount}</TableCell>
+                  <TableCell align="right">
+                    <a
+                      href={`https://www.bscscan.com/tx/${row.txn}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <ArrowRightAltIcon />
+                    </a>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

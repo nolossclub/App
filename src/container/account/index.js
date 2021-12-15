@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 
 import Card from "@mui/material/Card";
 
@@ -11,13 +11,17 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import config from "../../utils/config";
 import styled from "@emotion/styled";
+import {
+  useRecoilState,
+} from 'recoil';
 
 import { ContainerBox } from "../../utils/style";
+import { totalTicketsState, userTicketsState } from "../../utils/states";
 
 function Account() {
   const { library, account } = useWeb3React();
-  const [userTickets, setUserTickets] = useState([]);
-  const [totalTickets, setTotalTickets] = useState(0);
+  const [userTickets, setUserTickets] = useRecoilState(userTicketsState);
+  const [totalTickets, setTotalTickets] = useRecoilState(totalTicketsState);
 
   const controllerContract = useControllerContract();
   const nftContract = useNFTContract();
@@ -53,6 +57,7 @@ function Account() {
     return () => {
       stale = true;
     };
+  // eslint-disable-next-line
   }, [nftContract, account]);
 
   const burnToken = async (tokenId) => {
@@ -95,34 +100,36 @@ function Account() {
         <Grid container spacing={2} style={{ marginTop: 24 }}>
           {userTickets.map((row) => (
             <Grid item xs={12} md={6}>
-              <Card variant="outlined">
+              <TicketCard variant="outlined">
                 <CardContent>
-                  <Typography
-                    sx={{ fontSize: 18, p: 1 }}
-                    color="text.secondary"
-                    gutterBottom
+                  <a
+                    href={`${row.tokenUri}.png`}
+                    target="_blank"
+                    rel="noreferrer"
                   >
-                    Ticket #{row.id}
-                  </Typography>
+                    <Typography
+                      sx={{ fontSize: 18, p: 1 }}
+                      color="text.secondary"
+                      align="center"
+                      gutterBottom
+                      variant="h5"
+                      component="h5"
+                    >
+                      Ticket #{row.id}
+                    </Typography>
+                  </a>
                   <CardActions>
                     <Button
                       variant="outlined"
+                      fullWidth
                       onClick={() => burnToken(row.id)}
                       color="error"
                     >
                       Burn
                     </Button>
-                    <Button
-                      variant="link"
-                      color="info"
-                      target="_blank"
-                      href={`${row.tokenUri}.png`}
-                    >
-                      Info
-                    </Button>
                   </CardActions>
                 </CardContent>
-              </Card>
+              </TicketCard>
             </Grid>
           ))}
         </Grid>
@@ -143,5 +150,26 @@ const InfoBox = styled.div`
     color: #e3e3e3;
   }
 `;
+
+const TicketCard = styled(Card)`
+  border-radius: 10px;
+  border: 0;
+  .MuiCardContent-root {
+    padding: 4px;
+    margin: 0;
+  }
+  h5 {
+    font-size: 24px;
+    font-family: "Paytone One", "Work Sans", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans",
+      "Droid Sans", "Helvetica Neue", sans-serif;
+    color: #f1c40f;
+    padding: 16px 0;
+  }
+
+  
+
+
+  `;
 
 export default Account;
