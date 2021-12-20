@@ -7,9 +7,7 @@ import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import { ethers } from "ethers";
-import {
-  useRecoilState,
-} from 'recoil';
+import { useRecoilState } from "recoil";
 
 import config from "../../utils/config";
 import {
@@ -21,7 +19,13 @@ import { useWeb3React } from "@web3-react/core";
 import { formatEther } from "@ethersproject/units";
 import styled from "@emotion/styled";
 import { CustomModalBox, ContainerBox } from "../../utils/style";
-import { tvlState, lottoState, totalNftsState, busdBalanceState } from "../../utils/states";
+import {
+  tvlState,
+  lottoState,
+  totalNftsState,
+  busdBalanceState,
+} from "../../utils/states";
+import { Alert, Snackbar } from "@mui/material";
 
 const MAX_ALLOWANCE = ethers.BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
@@ -41,6 +45,13 @@ function Pool() {
   const [busdBalance, setBusdBalance] = useRecoilState(busdBalanceState);
   const [totalNfts, setTotalNfts] = useRecoilState(totalNftsState);
   const [allowance, setAllowance] = useState(true);
+  const [reload, setReload] = useState(false);
+
+  const [notification, setNotification] = useState({
+    show: false,
+    type: "success",
+    message: "",
+  });
 
   const [open, setOpen] = useState(false);
   const handleOpen = () => {
@@ -51,7 +62,7 @@ function Pool() {
 
   useEffect(() => {
     let stale = false;
-    const initData = async () => {
+    const initLottoData = async () => {
       try {
         const tvl = await controllerContract.protocolBal();
         const tvlFormatted = parseFloat(formatEther(tvl)).toFixed(0);
@@ -63,14 +74,16 @@ function Pool() {
       }
       try {
         const lotto = await controllerContract.lotto();
-        const lottoFormatted = parseFloat(formatEther(lotto)).toFixed(0);
-
+        const lottoFormatted = parseFloat(formatEther(lotto)).toFixed(8);
         if (!stale) {
           setLotto(lottoFormatted);
         }
       } catch (e) {
         console.log(e);
       }
+    };
+
+    const initData = async () => {
       try {
         const busd = await busdContract.balanceOf(account);
         const busdFormatted = parseFloat(formatEther(busd.toString())).toFixed(
@@ -105,54 +118,106 @@ function Pool() {
         console.log(e);
       }
     };
+
     initData();
+    initLottoData();
+    setInterval(() => {
+      initLottoData();
+    }, 10 * 1000);
     return () => {
       stale = true;
     };
-  });
+    // eslint-disable-next-line
+  }, [reload]);
 
   // Steppers
   const [activeStep, setActiveStep] = React.useState(0);
 
   const approve = async () => {
-    const busdAllowance = await busdContract.allowance(
-      account,
-      config.CONTROLLER_CONTRACT_ADDRESS
-    );
+    try {
+      const busdAllowance = await busdContract.allowance(
+        account,
+        config.CONTROLLER_CONTRACT_ADDRESS
+      );
 
-    if (busdAllowance.eq(MAX_ALLOWANCE)) {
-      setActiveStep(1);
-      return;
-    }
-
-    const approved = await busdContract.approve(
-      config.CONTROLLER_CONTRACT_ADDRESS,
-      MAX_ALLOWANCE
-    );
-
-    library.once(approved.hash, (done) => {
-      if (done.status === 1) {
+      if (busdAllowance.eq(MAX_ALLOWANCE)) {
         setActiveStep(1);
-      } else {
-        console.log("ERROR");
+        return;
       }
-    });
+
+      const approved = await busdContract.approve(
+        config.CONTROLLER_CONTRACT_ADDRESS,
+        MAX_ALLOWANCE
+      );
+
+      library.once(approved.hash, (done) => {
+        if (done.status === 1) {
+          setActiveStep(1);
+          setNotification({
+            show: true,
+            type: "success",
+            message: "BUSD Approved.",
+          });
+        } else {
+          setNotification({
+            show: true,
+            type: "error",
+            message: "BUSD approve failed.",
+          });
+        }
+      });
+    } catch (e) {
+      setNotification({
+        show: true,
+        type: "error",
+        message: "BUSD approve failed.",
+      });
+    }
   };
 
   const enterLotto = async () => {
-    const entered = await controllerContract.mint({
-      gasLimit: config.MAX_GAS_LIMIT,
-    });
+    try {
+      const entered = await controllerContract.mint({
+        gasLimit: config.MAX_GAS_LIMIT,
+      });
 
-    library.once(entered.hash, (done) => {
-      if (done.status === 1) {
-        alert("Got 1 NFT.");
-      } else {
-        console.log("ERROR");
-      }
+      library.once(entered.hash, (done) => {
+        if (done.status === 1) {
+          alert("Got 1 NFT.");
+          setNotification({
+            show: true,
+            type: "success",
+            message: "Received 1 lotto ticket.",
+          });
+          setReload(!reload);
+        } else {
+          setNotification({
+            show: true,
+            type: "error",
+            message: "Failed to get lotto ticket.",
+          });
+        }
 
-      setActiveStep(0);
-      handleClose();
+        setActiveStep(0);
+        handleClose();
+      });
+    } catch (e) {
+      setNotification({
+        show: true,
+        type: "error",
+        message: "Failed to get lotto ticket.",
+      });
+    }
+  };
+
+  const handleNotificationClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setNotification({
+      status: false,
+      type: "success",
+      message: "",
     });
   };
 
@@ -165,7 +230,7 @@ function Pool() {
         <InfoBox>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <Typography variant="h4" component="h4" align="center">
+              <Typography variant="h5" component="h5" align="center">
                 ${tvl}
               </Typography>
               <Typography variant="p" component="p" align="center">
@@ -173,7 +238,7 @@ function Pool() {
               </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Typography variant="h4" component="h4" align="center">
+              <Typography variant="h5" component="h5" align="center">
                 ${lotto}
               </Typography>
               <Typography variant="p" component="p" align="center">
@@ -267,6 +332,20 @@ function Pool() {
             </Modal>
           </Grid>
         </Grid>
+        <Snackbar
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          open={notification.show}
+          autoHideDuration={5000}
+          onClose={handleNotificationClose}
+        >
+          <Alert
+            onClose={handleNotificationClose}
+            severity={notification.type}
+            sx={{ width: "100%" }}
+          >
+            {notification.message}
+          </Alert>
+        </Snackbar>
       </ContainerBox>
     </>
   );
@@ -315,10 +394,13 @@ const InfoBox = styled.div`
   border-radius: 10px;
   padding: 24px 8px;
   margin-bottom: 24px;
-  h4 {
-    font-weight: 600;
+  h5 {
+    font-weight: 700;
+    font-size: 32px;
+    color: #fed330;
   }
   p {
+    font-size: 14px;
     color: #e3e3e3;
   }
 `;

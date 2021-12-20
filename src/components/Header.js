@@ -97,7 +97,7 @@ const Header = (props) => {
               }}
             >
               {pages.map((page) => (
-                <Link to={page.url}>
+                <Link key={JSON.stringify(page)} to={page.url}>
                   <MenuButton
                     variant={
                       location.pathname === page.url ? "contained" : "link"
@@ -126,11 +126,7 @@ const Header = (props) => {
                 alignItems="center"
               >
                 <Button variant="link" onClick={toggleDrawer(true)}>
-                  <Grid
-                    direction="row"
-                    justifyContent="left"
-                    alignItems="center"
-                  >
+                  <Grid justifyContent="left" alignItems="center">
                     <Grid
                       container
                       direction="row"

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import Card from "@mui/material/Card";
 
@@ -11,9 +11,8 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import config from "../../utils/config";
 import styled from "@emotion/styled";
-import {
-  useRecoilState,
-} from 'recoil';
+import { useRecoilState } from "recoil";
+import { Alert, Snackbar } from "@mui/material";
 
 import { ContainerBox } from "../../utils/style";
 import { totalTicketsState, userTicketsState } from "../../utils/states";
@@ -25,6 +24,14 @@ function Account() {
 
   const controllerContract = useControllerContract();
   const nftContract = useNFTContract();
+
+  const [reload, setReload] = useState(false);
+
+  const [notification, setNotification] = useState({
+    show: false,
+    type: "success",
+    message: "",
+  });
 
   useEffect(() => {
     let stale = false;
@@ -57,20 +64,48 @@ function Account() {
     return () => {
       stale = true;
     };
-  // eslint-disable-next-line
-  }, [nftContract, account]);
+    // eslint-disable-next-line
+  }, [reload]);
 
   const burnToken = async (tokenId) => {
-    const entered = await controllerContract.burn(tokenId, {
-      gasLimit: config.MAX_GAS_LIMIT,
-    });
+    try {
+      const entered = await controllerContract.burn(tokenId, {
+        gasLimit: config.MAX_GAS_LIMIT,
+      });
 
-    library.once(entered.hash, (done) => {
-      if (done.status === 1) {
-        alert("NFT Burned.");
-      } else {
-        console.log("ERROR");
-      }
+      library.once(entered.hash, (done) => {
+        if (done.status === 1) {
+          setNotification({
+            show: true,
+            type: "success",
+            message: "Lotto ticket burned.",
+          });
+          setReload(!reload);
+        } else {
+          setNotification({
+            show: true,
+            type: "error",
+            message: "Lotto ticket burn failed.",
+          });
+        }
+      });
+    } catch (e) {
+      setNotification({
+        show: true,
+        type: "error",
+        message: "Lotto ticket burn failed.",
+      });
+    }
+  };
+
+  const handleNotificationClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setNotification({
+      status: false,
+      type: "success",
+      message: "",
     });
   };
 
@@ -80,7 +115,7 @@ function Account() {
         <InfoBox>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <Typography variant="h4" component="h4" align="center">
+              <Typography variant="h5" component="h5" align="center">
                 {totalTickets}
               </Typography>
               <Typography variant="p" component="p" align="center">
@@ -88,7 +123,7 @@ function Account() {
               </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Typography variant="h4" component="h4" align="center">
+              <Typography variant="h5" component="h5" align="center">
                 ${totalTickets * 100}
               </Typography>
               <Typography variant="p" component="p" align="center">
@@ -99,7 +134,7 @@ function Account() {
         </InfoBox>
         <Grid container spacing={2} style={{ marginTop: 24 }}>
           {userTickets.map((row) => (
-            <Grid item xs={12} md={6}>
+            <Grid key={row.id} item xs={12} md={6}>
               <TicketCard variant="outlined">
                 <CardContent>
                   <a
@@ -133,6 +168,20 @@ function Account() {
             </Grid>
           ))}
         </Grid>
+        <Snackbar
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          open={notification.show}
+          autoHideDuration={6000}
+          onClose={handleNotificationClose}
+        >
+          <Alert
+            onClose={handleNotificationClose}
+            severity={notification.type}
+            sx={{ width: "100%" }}
+          >
+            {notification.message}
+          </Alert>
+        </Snackbar>
       </ContainerBox>
     </>
   );
@@ -143,10 +192,13 @@ const InfoBox = styled.div`
   border-radius: 10px;
   padding: 24px 8px;
   margin-bottom: 24px;
-  h4 {
-    font-weight: 600;
+  h5 {
+    font-weight: 700;
+    font-size: 32px;
+    color: #fed330;
   }
   p {
+    font-size: 14px;
     color: #e3e3e3;
   }
 `;
@@ -166,10 +218,6 @@ const TicketCard = styled(Card)`
     color: #f1c40f;
     padding: 16px 0;
   }
-
-  
-
-
-  `;
+`;
 
 export default Account;

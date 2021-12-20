@@ -8,6 +8,7 @@ import WavesIcon from "@mui/icons-material/Waves";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import BadgeIcon from "@mui/icons-material/Badge";
 import styled from "@emotion/styled";
+import { useWeb3React } from "@web3-react/core";
 const pages = [
   {
     name: "Pool",
@@ -27,29 +28,37 @@ const pages = [
 ];
 
 export default function BottomNav() {
+  const { active } = useWeb3React();
+
   const [value, setValue] = React.useState(0);
 
   const navigate = useNavigate();
 
   return (
     <Box sx={{ display: { xs: "flex", md: "none" } }}>
-      <Paper
-        sx={{ position: "fixed", bottom: 0, left: 0, right: 0 }}
-        elevation={4}
-      >
-        <BottomBar
-          showLabels
-          value={value}
-          onChange={(event, newValue) => {
-            setValue(newValue);
-            navigate(pages[newValue].url);
-          }}
+      {active ? (
+        <Paper
+          sx={{ position: "fixed", bottom: 0, left: 0, right: 0 }}
+          elevation={4}
         >
-          {pages.map((page) => (
-            <BottomNavigationAction label={page.name} icon={page.icon} />
-          ))}
-        </BottomBar>
-      </Paper>
+          <BottomBar
+            showLabels
+            value={value}
+            onChange={(event, newValue) => {
+              setValue(newValue);
+              navigate(pages[newValue].url);
+            }}
+          >
+            {pages.map((page) => (
+              <BottomNavigationAction
+                key={JSON.stringify(page)}
+                label={page.name}
+                icon={page.icon}
+              />
+            ))}
+          </BottomBar>
+        </Paper>
+      ) : null}
     </Box>
   );
 }
