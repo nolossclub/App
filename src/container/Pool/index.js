@@ -176,6 +176,15 @@ function Pool() {
   };
 
   const enterLotto = async () => {
+    if (busdBalance < 100) {
+      setNotification({
+        show: true,
+        type: "error",
+        message: "You don't have 100 BUSD.",
+      });
+      return;
+    }
+
     try {
       const entered = await controllerContract.mint({
         gasLimit: config.MAX_GAS_LIMIT,
