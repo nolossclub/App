@@ -10,8 +10,8 @@ export const lottoState = atom({
   default: 0,
 });
 
-export const busdBalanceState = atom({
-  key: "busdBalance",
+export const tokenBalanceState = atom({
+  key: "tokenBalance",
   default: 0,
 });
 
@@ -33,4 +33,9 @@ export const totalTicketsState = atom({
 export const winnersState = atom({
   key: "winners",
   default: [],
+});
+
+export const selectedTokenState = atom({
+  key: "selectedToken",
+  default: "BUSD",
 });

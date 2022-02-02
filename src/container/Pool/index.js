@@ -6,14 +6,19 @@ import Modal from "@mui/material/Modal";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
+import FormControl from "@mui/material/FormControl";
+
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+
 import { ethers } from "ethers";
 import { useRecoilState } from "recoil";
 
 import config from "../../utils/config";
 import {
-  useControllerContract,
-  useBUSDContract,
-  useNFTContract,
+  getTokenContract,
+  getControllerContract,
+  getNFTContract,
 } from "./../../hooks/index";
 import { useWeb3React } from "@web3-react/core";
 import { formatEther } from "@ethersproject/units";
@@ -23,26 +28,24 @@ import {
   tvlState,
   lottoState,
   totalNftsState,
-  busdBalanceState,
+  tokenBalanceState,
+  selectedTokenState,
 } from "../../utils/states";
 import { Alert, Snackbar } from "@mui/material";
+import busdImage from "../../images/busd.png";
+import usdtImage from "../../images/usdt.png";
+import usdcImage from "../../images/usdc.png";
 
 const MAX_ALLOWANCE = ethers.BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
 
-const steps = ["Approve BUSD", "Enter Lotto"];
-
 function Pool() {
   const { library, account } = useWeb3React();
 
-  const controllerContract = useControllerContract();
-  const busdContract = useBUSDContract(0);
-  const nftContract = useNFTContract(0);
-
   const [tvl, setTvl] = useRecoilState(tvlState);
   const [lotto, setLotto] = useRecoilState(lottoState);
-  const [busdBalance, setBusdBalance] = useRecoilState(busdBalanceState);
+  const [tokenBalance, setTokenBalance] = useRecoilState(tokenBalanceState);
   const [totalNfts, setTotalNfts] = useRecoilState(totalNftsState);
   const [allowance, setAllowance] = useState(true);
   const [reload, setReload] = useState(false);
@@ -60,9 +63,20 @@ function Pool() {
   };
   const handleClose = () => setOpen(false);
 
+  // Steppers
+  const [activeStep, setActiveStep] = React.useState(0);
+
+  const [selectedToken, setSelectedToken] = useRecoilState(selectedTokenState);
+
   useEffect(() => {
     let stale = false;
     const initLottoData = async () => {
+      const controllerContract = getControllerContract(
+        library,
+        config.controller[selectedToken],
+        account
+      );
+
       try {
         const tvl = await controllerContract.protocolBal();
         const tvlFormatted = parseFloat(formatEther(tvl)).toFixed(0);
@@ -84,17 +98,30 @@ function Pool() {
     };
 
     const initData = async () => {
+      const tokenContract = getTokenContract(
+        library,
+        config.tokens[selectedToken],
+        account
+      );
+
+      const nftContract = getNFTContract(
+        library,
+        config.nft[selectedToken],
+        account
+      );
+
       try {
-        const busd = await busdContract.balanceOf(account);
-        const busdFormatted = parseFloat(formatEther(busd.toString())).toFixed(
-          0
-        );
+        const token = await tokenContract.balanceOf(account);
+        const tokenFormatted = parseFloat(
+          formatEther(token.toString())
+        ).toFixed(0);
         if (!stale) {
-          setBusdBalance(busdFormatted);
+          setTokenBalance(tokenFormatted);
         }
       } catch (e) {
         console.log(e);
       }
+
       try {
         const totalNFTs = (await nftContract.balanceOf(account)).toString();
 
@@ -106,12 +133,12 @@ function Pool() {
       }
 
       try {
-        const busdAllowance = await busdContract.allowance(
+        const tokenAllowance = await tokenContract.allowance(
           account,
-          config.CONTROLLER_CONTRACT_ADDRESS
+          config.controller[selectedToken]
         );
 
-        if (!busdAllowance.eq(MAX_ALLOWANCE)) {
+        if (!tokenAllowance.eq(MAX_ALLOWANCE)) {
           setAllowance(false);
         }
       } catch (e) {
@@ -128,25 +155,28 @@ function Pool() {
       stale = true;
     };
     // eslint-disable-next-line
-  }, [reload]);
-
-  // Steppers
-  const [activeStep, setActiveStep] = React.useState(0);
+  }, [reload, selectedToken]);
 
   const approve = async () => {
+    const tokenContract = getTokenContract(
+      library,
+      config.tokens[selectedToken],
+      account
+    );
+
     try {
-      const busdAllowance = await busdContract.allowance(
+      const tokenAllowance = await tokenContract.allowance(
         account,
-        config.CONTROLLER_CONTRACT_ADDRESS
+        config.controller[selectedToken]
       );
 
-      if (busdAllowance.eq(MAX_ALLOWANCE)) {
+      if (tokenAllowance.eq(MAX_ALLOWANCE)) {
         setActiveStep(1);
         return;
       }
 
-      const approved = await busdContract.approve(
-        config.CONTROLLER_CONTRACT_ADDRESS,
+      const approved = await tokenContract.approve(
+        config.controller[selectedToken],
         MAX_ALLOWANCE
       );
 
@@ -156,13 +186,13 @@ function Pool() {
           setNotification({
             show: true,
             type: "success",
-            message: "BUSD Approved.",
+            message: `${selectedToken} Approved.`,
           });
         } else {
           setNotification({
             show: true,
             type: "error",
-            message: "BUSD approve failed.",
+            message: `${selectedToken} approve failed.`,
           });
         }
       });
@@ -170,20 +200,26 @@ function Pool() {
       setNotification({
         show: true,
         type: "error",
-        message: "BUSD approve failed.",
+        message: `${selectedToken} approve failed.`,
       });
     }
   };
 
   const enterLotto = async () => {
-    if (busdBalance < 100) {
+    if (tokenBalance < 100) {
       setNotification({
         show: true,
         type: "error",
-        message: "You don't have 100 BUSD.",
+        message: `You don't have 100 ${selectedToken}.`,
       });
       return;
     }
+
+    const controllerContract = getControllerContract(
+      library,
+      config.controller[selectedToken],
+      account
+    );
 
     try {
       const entered = await controllerContract.mint({
@@ -230,11 +266,83 @@ function Pool() {
     });
   };
 
+  const changeToken = (_, newToken) => {
+    if (newToken) {
+      setSelectedToken(newToken);
+    }
+  };
+
+  const steps = [`Approve ${selectedToken}`, "Enter Lotto"];
+
   return (
     <>
       <ContainerBox component="div">
+        <Grid
+          container
+          spacing={12}
+          direction="column"
+          justifyContent="center"
+          alignItems="center"
+        >
+          <Grid item xs={12}>
+            <FormControl style={{ textAlign: "center" }}>
+              <Typography
+                variant="b"
+                component="b"
+                align="center"
+                style={{ marginBottom: 16 }}
+              >
+                Select your token
+              </Typography>
+
+              <ToggleButtonGroup
+                color="secondary"
+                value={selectedToken}
+                onChange={changeToken}
+                exclusive
+              >
+                <ToggleButton value="BUSD">
+                  <img
+                    height="28"
+                    style={{ marginRight: 8 }}
+                    src={busdImage}
+                    alt="BUSD"
+                  />
+                  <Typography variant="p" component="p">
+                    BUSD
+                  </Typography>
+                </ToggleButton>
+
+                <ToggleButton value="USDT">
+                  <img
+                    height="28"
+                    style={{ marginRight: 8 }}
+                    src={usdtImage}
+                    alt="USDT"
+                  />
+                  <Typography variant="p" component="p">
+                    USDT
+                  </Typography>
+                </ToggleButton>
+
+                <ToggleButton value="USDC">
+                  <img
+                    height="28"
+                    style={{ marginRight: 8 }}
+                    src={usdcImage}
+                    alt="USDC"
+                  />
+                  <Typography variant="p" component="p">
+                    USDC
+                  </Typography>
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </FormControl>
+          </Grid>
+        </Grid>
+
         <Heading variant="h4" component="h4" align="center">
-          Deposit BUSD, Get NFT ticket & Win Reward
+          Deposit ${selectedToken}, Get NFT ticket & Win Reward
         </Heading>
         <InfoBox>
           <Grid container spacing={2}>
@@ -261,10 +369,10 @@ function Pool() {
           <Grid item xs={12}>
             <EntryBox>
               <Typography variant="b" component="b" align="center">
-                BUSD Balance
+                {selectedToken} Balance
               </Typography>
               <Typography variant="p" component="p" align="center">
-                {busdBalance} BUSD
+                {tokenBalance} {selectedToken}
               </Typography>
             </EntryBox>
             <EntryBox>
@@ -322,7 +430,7 @@ function Pool() {
                       color="primary"
                       fullWidth
                     >
-                      Approve BUSD
+                      Approve {selectedToken}
                     </LottoButton>
                   </React.Fragment>
                 ) : (

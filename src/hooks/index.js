@@ -56,3 +56,27 @@ export function useBUSDContract() {
     }
   }, [library, account]);
 }
+
+export function getTokenContract(library, address, account) {
+  return new Contract(
+    address,
+    busdAbi,
+    library.getSigner(account).connectUnchecked()
+  );
+}
+
+export function getControllerContract(library, address, account) {
+  return new Contract(
+    address,
+    controllerAbi,
+    library.getSigner(account).connectUnchecked()
+  );
+}
+
+export function getNFTContract(library, address, account) {
+  return new Contract(
+    address,
+    nftAbi,
+    library.getSigner(account).connectUnchecked()
+  );
+}
