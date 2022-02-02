@@ -6,13 +6,9 @@ import Modal from "@mui/material/Modal";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
-import FormControl from "@mui/material/FormControl";
-
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 import { ethers } from "ethers";
-import { useRecoilState } from "recoil";
+import { useRecoilValue, useRecoilState } from "recoil";
 
 import config from "../../utils/config";
 import {
@@ -32,9 +28,7 @@ import {
   selectedTokenState,
 } from "../../utils/states";
 import { Alert, Snackbar } from "@mui/material";
-import busdImage from "../../images/busd.png";
-import usdtImage from "../../images/usdt.png";
-import usdcImage from "../../images/usdc.png";
+import TokenSelection from "../../components/TokenSelection";
 
 const MAX_ALLOWANCE = ethers.BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
@@ -66,7 +60,7 @@ function Pool() {
   // Steppers
   const [activeStep, setActiveStep] = React.useState(0);
 
-  const [selectedToken, setSelectedToken] = useRecoilState(selectedTokenState);
+  const selectedToken = useRecoilValue(selectedTokenState);
 
   useEffect(() => {
     let stale = false;
@@ -266,81 +260,12 @@ function Pool() {
     });
   };
 
-  const changeToken = (_, newToken) => {
-    if (newToken) {
-      setSelectedToken(newToken);
-    }
-  };
-
   const steps = [`Approve ${selectedToken}`, "Enter Lotto"];
 
   return (
     <>
       <ContainerBox component="div">
-        <Grid
-          container
-          spacing={12}
-          direction="column"
-          justifyContent="center"
-          alignItems="center"
-        >
-          <Grid item xs={12}>
-            <FormControl style={{ textAlign: "center" }}>
-              <Typography
-                variant="b"
-                component="b"
-                align="center"
-                style={{ marginBottom: 16 }}
-              >
-                Select your token
-              </Typography>
-
-              <ToggleButtonGroup
-                color="secondary"
-                value={selectedToken}
-                onChange={changeToken}
-                exclusive
-              >
-                <ToggleButton value="BUSD">
-                  <img
-                    height="28"
-                    style={{ marginRight: 8 }}
-                    src={busdImage}
-                    alt="BUSD"
-                  />
-                  <Typography variant="p" component="p">
-                    BUSD
-                  </Typography>
-                </ToggleButton>
-
-                <ToggleButton value="USDT">
-                  <img
-                    height="28"
-                    style={{ marginRight: 8 }}
-                    src={usdtImage}
-                    alt="USDT"
-                  />
-                  <Typography variant="p" component="p">
-                    USDT
-                  </Typography>
-                </ToggleButton>
-
-                <ToggleButton value="USDC">
-                  <img
-                    height="28"
-                    style={{ marginRight: 8 }}
-                    src={usdcImage}
-                    alt="USDC"
-                  />
-                  <Typography variant="p" component="p">
-                    USDC
-                  </Typography>
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </FormControl>
-          </Grid>
-        </Grid>
-
+        <TokenSelection />
         <Heading variant="h4" component="h4" align="center">
           Deposit ${selectedToken}, Get NFT ticket & Win Reward
         </Heading>
@@ -450,7 +375,7 @@ function Pool() {
           </Grid>
         </Grid>
         <Snackbar
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
           open={notification.show}
           autoHideDuration={5000}
           onClose={handleNotificationClose}
@@ -502,7 +427,7 @@ const LottoButton = styled(Button)`
 `;
 
 const Heading = styled(Typography)`
-  margin: 36px 8px;
+  margin: 36px 0;
   font-weight: 700;
 `;
 

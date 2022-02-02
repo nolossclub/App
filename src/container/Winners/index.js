@@ -9,24 +9,24 @@ import Paper from "@mui/material/Paper";
 import axios from "axios";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import { ContainerBox } from "../../utils/style";
-import { useNFTContract } from "./../../hooks/index";
 import { formatETHAddress } from "./../../utils/index";
 import config from "../../utils/config";
-import { useRecoilState } from "recoil";
-import { winnersState } from "../../utils/states";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { selectedTokenState, winnersState } from "../../utils/states";
 import { formatEther } from "@ethersproject/units";
+import TokenSelection from "../../components/TokenSelection";
 
 function Winners() {
-  const nftContract = useNFTContract();
-
   const [winners, setWinners] = useRecoilState(winnersState);
+
+  const selectedToken = useRecoilValue(selectedTokenState);
 
   useEffect(() => {
     let stale = false;
     const initData = async () => {
       try {
         let winnersList = await axios({
-          url: config.THEGRAPH_URL,
+          url: config.thegraph[selectedToken],
           method: "post",
           data: {
             query: `
@@ -59,11 +59,12 @@ function Winners() {
       stale = true;
     };
     // eslint-disable-next-line
-  }, [nftContract]);
+  }, [selectedToken]);
 
   return (
     <>
       <ContainerBox>
+        <TokenSelection />
         <TableContainer component={Paper} color="transparent">
           <Table aria-label="simple table">
             <TableHead>

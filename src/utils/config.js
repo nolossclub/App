@@ -1,8 +1,11 @@
 const config = {
   network: "Binance Smart Chain",
   MAX_GAS_LIMIT: 800000,
-  THEGRAPH_URL:
-    "https://api.thegraph.com/subgraphs/name/nolossclub/no-loss-club",
+  thegraph: {
+    BUSD: "https://api.thegraph.com/subgraphs/name/nolossclub/busd",
+    USDT: "https://api.thegraph.com/subgraphs/name/nolossclub/usdt",
+    USDC: "https://api.thegraph.com/subgraphs/name/nolossclub/usdc",
+  },
   tokens: {
     BUSD: "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
     USDT: "0x55d398326f99059ff775485246999027b3197955",

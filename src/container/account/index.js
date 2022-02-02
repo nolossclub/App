@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import Card from "@mui/material/Card";
 
-import { useControllerContract, useNFTContract } from "./../../hooks/index";
+import { getNFTContract, getControllerContract } from "./../../hooks/index";
 import { useWeb3React } from "@web3-react/core";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
@@ -11,19 +11,22 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import config from "../../utils/config";
 import styled from "@emotion/styled";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import { Alert, Snackbar } from "@mui/material";
 
 import { ContainerBox } from "../../utils/style";
-import { totalTicketsState, userTicketsState } from "../../utils/states";
+import {
+  selectedTokenState,
+  totalTicketsState,
+  userTicketsState,
+} from "../../utils/states";
+import TokenSelection from "../../components/TokenSelection";
 
 function Account() {
   const { library, account } = useWeb3React();
   const [userTickets, setUserTickets] = useRecoilState(userTicketsState);
   const [totalTickets, setTotalTickets] = useRecoilState(totalTicketsState);
-
-  const controllerContract = useControllerContract();
-  const nftContract = useNFTContract();
+  const selectedToken = useRecoilValue(selectedTokenState);
 
   const [reload, setReload] = useState(false);
 
@@ -37,6 +40,12 @@ function Account() {
     let stale = false;
     const initData = async () => {
       try {
+        const nftContract = getNFTContract(
+          library,
+          config.nft[selectedToken],
+          account
+        );
+
         const totalSupply = await nftContract.totalSupply();
         const userTicketsList = [];
         let tickets = 0;
@@ -65,10 +74,16 @@ function Account() {
       stale = true;
     };
     // eslint-disable-next-line
-  }, [reload]);
+  }, [reload, selectedToken]);
 
   const burnToken = async (tokenId) => {
     try {
+      const controllerContract = getControllerContract(
+        library,
+        config.controller[selectedToken],
+        account
+      );
+
       const entered = await controllerContract.burn(tokenId, {
         gasLimit: config.MAX_GAS_LIMIT,
       });
@@ -112,6 +127,7 @@ function Account() {
   return (
     <>
       <ContainerBox>
+        <TokenSelection />
         <InfoBox>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
