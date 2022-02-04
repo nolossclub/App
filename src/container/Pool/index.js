@@ -34,6 +34,8 @@ const MAX_ALLOWANCE = ethers.BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
 
+const LOTTO_AMOUNT = ethers.BigNumber.from("100");
+
 function Pool() {
   const { library, account } = useWeb3React();
 
@@ -132,7 +134,7 @@ function Pool() {
           config.controller[selectedToken]
         );
 
-        if (!tokenAllowance.eq(MAX_ALLOWANCE)) {
+        if (!tokenAllowance.gt(LOTTO_AMOUNT)) {
           setAllowance(false);
         }
       } catch (e) {
@@ -164,7 +166,7 @@ function Pool() {
         config.controller[selectedToken]
       );
 
-      if (tokenAllowance.eq(MAX_ALLOWANCE)) {
+      if (tokenAllowance.gt(LOTTO_AMOUNT)) {
         setActiveStep(1);
         return;
       }
