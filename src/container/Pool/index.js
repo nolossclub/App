@@ -224,7 +224,6 @@ function Pool() {
 
       library.once(entered.hash, (done) => {
         if (done.status === 1) {
-          alert("Got 1 NFT.");
           setNotification({
             show: true,
             type: "success",

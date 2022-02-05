@@ -185,7 +185,7 @@ function Account() {
           ))}
         </Grid>
         <Snackbar
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
           open={notification.show}
           autoHideDuration={6000}
           onClose={handleNotificationClose}
