@@ -7,6 +7,7 @@ import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
 import { useWeb3React } from "@web3-react/core";
 import { injected } from "../hooks/connectors";
+import { useENS } from "../hooks";
 import { Avatar } from "@mui/material";
 import { Link } from "react-router-dom";
 import Grid from "@mui/material/Grid";
@@ -45,6 +46,7 @@ const Header = (props) => {
     setOpenDrawer(open);
   };
   const { active, deactivate, account, connector, chainId } = useWeb3React();
+  const { ensName, ensAvatar } = useENS(account);
 
   const [connectorName, setConnectorName] = useState("");
 
@@ -131,20 +133,24 @@ const Header = (props) => {
                       container
                       direction="row"
                       justifyContent="center"
+                      display="flex"
                       alignItems="center"
                     >
                       <Avatar
-                        src={`https://avatars.dicebear.com/v2/male/${account}.svg`}
+                        src={
+                          ensAvatar
+                            ? ensAvatar
+                            : `https://avatars.dicebear.com/v2/male/${account}.svg`
+                        }
                         sx={{
                           width: 28,
                           height: 28,
                           marginLeft: 2,
                           marginRight: 1,
-                          marginBottom: 1,
                         }}
                       />
                       <Typography component="p" sx={{ fontSize: 12 }}>
-                        {formatETHAddress(account)}
+                        {ensName || formatETHAddress(account)}
                       </Typography>
                     </Grid>
                   </Grid>
