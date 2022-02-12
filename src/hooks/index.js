@@ -1,10 +1,11 @@
 import { useWeb3React } from "@web3-react/core";
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import config from "../utils/config";
 import controllerAbi from "../utils/abis/controller.json";
 import nftAbi from "../utils/abis/nft.json";
 import busdAbi from "../utils/abis/busd.json";
 import { Contract } from "@ethersproject/contracts";
+import { getDefaultProvider } from "@ethersproject/providers";
 
 export function useControllerContract() {
   const { library, account } = useWeb3React();
@@ -21,6 +22,27 @@ export function useControllerContract() {
       return null;
     }
   }, [library, account]);
+}
+
+export function useENS(address) {
+  const [ensName, setENSName] = useState(null);
+  const [ensAvatar, setENSAvatar] = useState(null);
+
+  useEffect(() => {
+    const resolveENS = async () => {
+      if (address) {
+        const provider = await getDefaultProvider();
+        const ensName = await provider.lookupAddress(address);
+        const resolver = await provider.getResolver(ensName ?? "");
+        const ensAvatar = await resolver?.getAvatar();
+        setENSAvatar(ensAvatar?.url);
+        setENSName(ensName);
+      }
+    };
+    resolveENS();
+  }, [address]);
+
+  return { ensName, ensAvatar };
 }
 
 export function useNFTContract() {
